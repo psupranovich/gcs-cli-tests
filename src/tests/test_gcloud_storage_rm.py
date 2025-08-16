@@ -28,7 +28,9 @@ class TestGcloudStorageRm:
         self.bucket = sample_bucket
         self.assert_helper: AssertHelper = assert_helper
 
-    def _create_and_upload_file(self, file_name = None, file_content= None, bucket=None) -> tuple:
+    def _create_and_upload_file(
+        self, file_name=None, file_content=None, bucket=None
+    ) -> tuple:
         """
         Helper method to create a local file and upload it to the bucket.
         """
@@ -40,13 +42,10 @@ class TestGcloudStorageRm:
             bucket = self.bucket
 
         local_file_path = create_sample_text_file(
-            file_name=file_name,
-            file_content=file_content
+            file_name=file_name, file_content=file_content
         )
         upload_response = self.client.copy_file_to_bucket(
-            local_file_path=local_file_path,
-            bucket=bucket,
-            file_name=file_name
+            local_file_path=local_file_path, bucket=bucket, file_name=file_name
         )
         assert_that(upload_response.status_code).is_equal_to(0)
 
@@ -60,8 +59,7 @@ class TestGcloudStorageRm:
             bucket = self.bucket
 
         check_response = self.client.check_file_in_bucket(
-            bucket=bucket,
-            file_name=file_name
+            bucket=bucket, file_name=file_name
         )
         assert_that(check_response.status_code).is_equal_to(0)
 
@@ -73,12 +71,12 @@ class TestGcloudStorageRm:
             bucket = self.bucket
 
         verify_response = self.client.check_file_in_bucket(
-            bucket=bucket,
-            file_name=file_name
+            bucket=bucket, file_name=file_name
         )
         self.assert_helper.assert_error_response(
             response=verify_response,
-            expected_message="ERROR: (gcloud.storage.ls) One or more URLs matched no objects.")
+            expected_message="ERROR: (gcloud.storage.ls) One or more URLs matched no objects.",
+        )
 
     def _create_bucket(self, bucket_name=None):
         """
@@ -88,8 +86,7 @@ class TestGcloudStorageRm:
             bucket_name = f"test-bucket-rm-{random.randint(10000, 99999)}"
 
         create_response = self.client.create_bucket(
-            bucket=bucket_name,
-            project=self.project
+            bucket=bucket_name, project=self.project
         )
         assert_that(create_response.status_code).is_equal_to(0)
 
@@ -125,14 +122,12 @@ class TestGcloudStorageRm:
         for file_name, file_content in zip(file_names, file_contents):
             local_file_path = create_sample_text_file(
                 file_name=f"pattern_test_{random.randint(1000, 9999)}_{file_name}",
-                file_content=file_content
+                file_content=file_content,
             )
             local_file_paths.append(local_file_path)
 
             upload_response = self.client.copy_file_to_bucket(
-                local_file_path=local_file_path,
-                bucket=bucket,
-                file_name=file_name
+                local_file_path=local_file_path, bucket=bucket, file_name=file_name
             )
             assert_that(upload_response.status_code).is_equal_to(0)
 
@@ -148,8 +143,7 @@ class TestGcloudStorageRm:
         self._verify_file_exists(file_name)
 
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name
+            bucket=self.bucket, object_path=file_name
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -165,8 +159,7 @@ class TestGcloudStorageRm:
         self._verify_bucket_exists(test_bucket_name)
 
         delete_response = self.client.delete_object(
-            bucket=test_bucket_name,
-            recursive=True
+            bucket=test_bucket_name, recursive=True
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -189,10 +182,7 @@ class TestGcloudStorageRm:
         for file_name in file_names:
             self._verify_file_exists(file_name)
 
-        delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            pattern="**"
-        )
+        delete_response = self.client.delete_object(bucket=self.bucket, pattern="**")
         assert_that(delete_response.status_code).is_equal_to(0)
 
         for file_name in file_names:
@@ -208,27 +198,24 @@ class TestGcloudStorageRm:
         test_bucket_name = f"test-bucket-recursive-{random.randint(10000, 99999)}"
 
         create_response = self.client.create_bucket(
-            bucket=test_bucket_name,
-            project=self.project
+            bucket=test_bucket_name, project=self.project
         )
         assert_that(create_response.status_code).is_equal_to(0)
 
         local_file_path = create_sample_text_file(
             file_name=f"recursive_test_{random.randint(1000, 9999)}.txt",
-            file_content=file_content
+            file_content=file_content,
         )
 
         upload_response = self.client.copy_file_to_bucket(
             local_file_path=local_file_path,
             bucket=test_bucket_name,
-            file_name=file_name
+            file_name=file_name,
         )
         assert_that(upload_response.status_code).is_equal_to(0)
 
-        # Delete bucket recursively using delete_object with recursive flag
         delete_response = self.client.delete_object(
-            bucket=test_bucket_name,
-            recursive=True
+            bucket=test_bucket_name, recursive=True
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -240,17 +227,17 @@ class TestGcloudStorageRm:
         Verifies pattern-based deletion affects only matching files while preserving others.
         """
         time = get_current_epoch_time()
-        txt_file_names = [f"1{time}test-extension.txt",
-                          f"2{time}test-extension.txt",
-                          f"{time}document.txt"]
+        txt_file_names = [
+            f"1{time}test-extension.txt",
+            f"2{time}test-extension.txt",
+            f"{time}document.txt",
+        ]
 
         txt_file_contents = [fake.text() for _ in txt_file_names]
         self._upload_multiple_files(txt_file_names, txt_file_contents)
 
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            pattern="*test-extension.txt",
-            recursive=True
+            bucket=self.bucket, pattern="*test-extension.txt", recursive=True
         )
         assert_that(delete_response.status_code).is_equal_to(0)
         for txt_file in txt_file_names[:2]:
@@ -269,7 +256,7 @@ class TestGcloudStorageRm:
         delete_response = self.client.delete_object(
             bucket=self.bucket,
             object_path=file_name,
-            additional_headers=additional_headers
+            additional_headers=additional_headers,
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -280,16 +267,10 @@ class TestGcloudStorageRm:
         Test file deletion with all-versions flag enabled.
         Verifies that all versions of the file are removed from bucket.
         """
-        # Create and upload file to bucket
-        # file = f"file-{get_current_epoch_time()}.txt"
-        # self._create_and_upload_file(file)
-
         _, file_name, _ = self._create_and_upload_file()
 
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name,
-            all_versions=True
+            bucket=self.bucket, object_path=file_name, all_versions=True
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -300,15 +281,10 @@ class TestGcloudStorageRm:
         Test deletion operation with continue-on-error flag.
         Verifies that deletion continues processing despite encountering errors.
         """
-        # file = f"file-{get_current_epoch_time()}.txt"
-        # self._create_and_upload_file(file)
         _, file_name, _ = self._create_and_upload_file()
 
-
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name,
-            continue_on_error=True
+            bucket=self.bucket, object_path=file_name, continue_on_error=True
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
@@ -322,9 +298,7 @@ class TestGcloudStorageRm:
         _, file_name, _ = self._create_and_upload_file()
 
         self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name,
-            exclude_managed_folders=True
+            bucket=self.bucket, object_path=file_name, exclude_managed_folders=True
         )
 
         self._verify_file_deleted(file_name)
@@ -337,19 +311,17 @@ class TestGcloudStorageRm:
         _, file_name, _ = self._create_and_upload_file()
 
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name,
-            if_generation_match="99999"
+            bucket=self.bucket, object_path=file_name, if_generation_match="99999"
         )
         assert_that(delete_response.status_code).is_equal_to(1)
         assert_that(delete_response.output).contains(
-            "ERROR: HTTPError 412: At least one of the pre-conditions you specified did not hold")
+            "ERROR: HTTPError 412: At least one of the pre-conditions you specified did not hold"
+        )
 
         self._verify_file_exists(file_name=file_name)
 
         cleanup_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name
+            bucket=self.bucket, object_path=file_name
         )
         assert_that(cleanup_response.status_code).is_equal_to(0)
 
@@ -362,18 +334,16 @@ class TestGcloudStorageRm:
         _, file_name, _ = self._create_and_upload_file()
 
         delete_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name,
-            if_metageneration_match="99999"
+            bucket=self.bucket, object_path=file_name, if_metageneration_match="99999"
         )
         self.assert_helper.assert_error_response(
             response=delete_response,
-            expected_message="ERROR: HTTPError 412: At least one of the pre-conditions you specified did not hold")
+            expected_message="ERROR: HTTPError 412: At least one of the pre-conditions you specified did not hold",
+        )
 
         self._verify_file_exists(file_name)
 
         cleanup_response = self.client.delete_object(
-            bucket=self.bucket,
-            object_path=file_name
+            bucket=self.bucket, object_path=file_name
         )
         assert_that(cleanup_response.status_code).is_equal_to(0)

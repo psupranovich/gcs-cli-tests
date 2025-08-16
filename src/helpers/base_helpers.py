@@ -10,11 +10,10 @@ def run_subprocess(command: Union[List[str], str]) -> GCPCommandResponse:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-
     )
     response = GCPCommandResponse(
         status_code=res.returncode,
         output=(res.stdout or "").strip(),
-        error=(res.stderr or "").strip()
+        error=(res.stderr or "").strip(),
     )
     return response

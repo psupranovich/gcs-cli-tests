@@ -6,7 +6,7 @@ from src.gcp_test_client.gcp_client import GcpStorage
 DEFAULT_TIMEOUT_MS = 30000
 
 pytest_plugins = [
-    'src.fixtures.gsp_fixture',
+    "src.fixtures.gsp_fixture",
 ]
 
 

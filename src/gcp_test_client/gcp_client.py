@@ -9,10 +9,10 @@ class GcpStorage:
 
     @staticmethod
     def create_gcp_project(
-            project_id: str,
-            name: Optional[str] = None,
-            organization_id: Optional[str] = None,
-            folder_id: Optional[str] = None,
+        project_id: str,
+        name: Optional[str] = None,
+        organization_id: Optional[str] = None,
+        folder_id: Optional[str] = None,
     ) -> GCPCommandResponse:
 
         cmd = ["gcloud", "projects", "create", project_id]
@@ -27,10 +27,10 @@ class GcpStorage:
 
     @staticmethod
     def create_bucket(
-            bucket: str,
-            project: str,
-            location: Optional[str] = None,
-            storage_class: Optional[str] = None,
+        bucket: str,
+        project: str,
+        location: Optional[str] = None,
+        storage_class: Optional[str] = None,
     ) -> GCPCommandResponse:
         bucket_uri = f"gs://{bucket}"
         cmd = [
@@ -64,7 +64,9 @@ class GcpStorage:
         return response
 
     @staticmethod
-    def delete_bucket(bucket: str, project: str, force: bool = False) -> GCPCommandResponse:
+    def delete_bucket(
+        bucket: str, project: str, force: bool = False
+    ) -> GCPCommandResponse:
         bucket_uri = f"gs://{bucket}"
         cmd = [
             "gcloud",
@@ -83,18 +85,20 @@ class GcpStorage:
         return response
 
     @staticmethod
-    def delete_object(bucket: str,
-                      object_path: str = None,
-                      *,
-                      project: Optional[str] = None,
-                      additional_headers: Optional[dict] = None,
-                      all_versions: bool = False,
-                      continue_on_error: bool = False,
-                      exclude_managed_folders: bool = False,
-                      recursive: bool = False,
-                      if_generation_match: Optional[str] = None,
-                      if_metageneration_match: Optional[str] = None,
-                      pattern: Optional[str] = None) -> GCPCommandResponse:
+    def delete_object(
+        bucket: str,
+        object_path: str = None,
+        *,
+        project: Optional[str] = None,
+        additional_headers: Optional[dict] = None,
+        all_versions: bool = False,
+        continue_on_error: bool = False,
+        exclude_managed_folders: bool = False,
+        recursive: bool = False,
+        if_generation_match: Optional[str] = None,
+        if_metageneration_match: Optional[str] = None,
+        pattern: Optional[str] = None,
+    ) -> GCPCommandResponse:
         if pattern:
             # Use pattern for deletion (e.g., *.txt, **)
             object_uri = f"gs://{bucket}/{pattern}"
@@ -141,20 +145,20 @@ class GcpStorage:
 
     @staticmethod
     def list_gcp_projects(limit: Optional[int] = 20) -> GCPCommandResponse:
-        cmd = [
-            "gcloud",
-            "projects",
-            "list",
-            "--sort-by=projectId"
-        ]
+        cmd = ["gcloud", "projects", "list", "--sort-by=projectId"]
         if limit is not None:
             cmd += ["--limit", str(limit)]
         response = run_subprocess(cmd)
         return response
 
     @staticmethod
-    def sign_url(bucket_file_path: str, project: str, service_account: str, duration: int = 3600,
-                 region: str = None) -> GCPCommandResponse:
+    def sign_url(
+        bucket_file_path: str,
+        project: str,
+        service_account: str,
+        duration: int = 3600,
+        region: str = None,
+    ) -> GCPCommandResponse:
         if region is None:
             region = get_config_value("region")
         cmd = [
@@ -171,31 +175,20 @@ class GcpStorage:
             "--http-verb",
             "GET",
             "--region",
-            region
+            region,
         ]
         response = run_subprocess(cmd)
         return response
 
     @staticmethod
     def check_file_in_bucket(bucket: str, file_name: str) -> GCPCommandResponse:
-        cmd = [
-            "gcloud",
-            "storage",
-            "ls",
-            f"gs://{bucket}/{file_name}"
-        ]
+        cmd = ["gcloud", "storage", "ls", f"gs://{bucket}/{file_name}"]
         response = run_subprocess(cmd)
         return response
 
     @staticmethod
     def copy_file_to_bucket(local_file_path, bucket, file_name) -> GCPCommandResponse:
-        cmd = [
-            "gcloud",
-            "storage",
-            "cp",
-            local_file_path,
-            f"gs://{bucket}/{file_name}"
-        ]
+        cmd = ["gcloud", "storage", "cp", local_file_path, f"gs://{bucket}/{file_name}"]
         response = run_subprocess(cmd)
         return response
 
@@ -204,7 +197,8 @@ class GcpStorage:
         cmd = [
             "gcloud",
             "services",
-            "enable", "iamcredentials.googleapis.com",
+            "enable",
+            "iamcredentials.googleapis.com",
             "--project",
             project,
         ]
@@ -248,28 +242,14 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-    # @staticmethod
-    # def allow_file_access(bucket, project_id):
-    #     cmd = [
-    #         "gcloud",
-    #         "storage",
-    #         "buckets",
-    #         "update",
-    #         f"gs://{bucket}",
-    #         "--no-requester-pays",
-    #         "--project",
-    #         project_id,
-    #     ]
-    #     response = run_subprocess(cmd)
-    #     return response
-
     @staticmethod
-    def cat_file_from_url(urls,
-                          additional_headers: Optional[dict] = None,
-                          display_url: bool = False,
-                          range_value: Optional[str] = None,
-                          decryption_keys: Optional[list] = None,
-                          ) -> GCPCommandResponse:
+    def cat_file_from_url(
+        urls,
+        additional_headers: Optional[dict] = None,
+        display_url: bool = False,
+        range_value: Optional[str] = None,
+        decryption_keys: Optional[list] = None,
+    ) -> GCPCommandResponse:
         if isinstance(urls, str):
             urls = [urls]
         cmd = ["gcloud", "storage", "cat"] + urls
@@ -292,15 +272,13 @@ class GcpStorage:
         return response
 
     @staticmethod
-    def describe_bucket(bucket_url: str, additional_headers: Optional[dict] = None, raw: bool = False,
-                        format: Optional[str] = None) -> GCPCommandResponse:
-        cmd = [
-            "gcloud",
-            "storage",
-            "buckets",
-            "describe",
-            bucket_url
-        ]
+    def describe_bucket(
+        bucket_url: str,
+        additional_headers: Optional[dict] = None,
+        raw: bool = False,
+        format: Optional[str] = None,
+    ) -> GCPCommandResponse:
+        cmd = ["gcloud", "storage", "buckets", "describe", bucket_url]
 
         if additional_headers:
             for header, value in additional_headers.items():

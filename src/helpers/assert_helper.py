@@ -5,7 +5,9 @@ from src.helpers.data_helper import GCPCommandResponse
 
 class AssertHelper:
     @staticmethod
-    def assert_error_response(response: GCPCommandResponse, expected_message: str, code: int = 1) -> None:
+    def assert_error_response(
+        response: GCPCommandResponse, expected_message: str, code: int = 1
+    ) -> None:
         """
         Assert that a response contains an expected error message.
         """

@@ -10,7 +10,7 @@ def get_config():
     config_path = src_dir / "config.json"
 
     try:
-        with open(config_path, 'r') as config_file:
+        with open(config_path, "r") as config_file:
             config_data = json.load(config_file)
         return config_data
     except FileNotFoundError:

@@ -16,12 +16,12 @@ class TestReadBucketFiles:
     Tests reading file contents from buckets with various options including
     pattern matching, byte ranges, headers, and error scenarios.
     """
+
     file_1_content = fake.paragraph()
     file_2_content = fake.paragraph()
 
     @pytest.fixture(autouse=True)
-    def setup_test(self, sample_project, sample_bucket, gcp_client,
-                   assert_helper):
+    def setup_test(self, sample_project, sample_bucket, gcp_client, assert_helper):
         self.client = gcp_client
         self.project = sample_project
         self.bucket = sample_bucket
@@ -32,7 +32,9 @@ class TestReadBucketFiles:
         if not file_name:
             file_name = f"file-{get_current_epoch_time()}.txt"
         file_content = fake.paragraph()
-        bucket_file = sample_file_to_bucket(file_name=file_name, file_content=file_content)
+        bucket_file = sample_file_to_bucket(
+            file_name=file_name, file_content=file_content
+        )
         return file_name, file_content, bucket_file
 
     @staticmethod
@@ -80,8 +82,12 @@ class TestReadBucketFiles:
         file1_name = f"1{time}-file-pattern.txt"
         file2_name = f"2{time}-file-pattern.txt"
 
-        _, file_1_content, _ = self._create_bucket_file(sample_file_to_bucket, file_name=file1_name)
-        _, file_2_content, _ = self._create_bucket_file(sample_file_to_bucket, file_name=file2_name)
+        _, file_1_content, _ = self._create_bucket_file(
+            sample_file_to_bucket, file_name=file1_name
+        )
+        _, file_2_content, _ = self._create_bucket_file(
+            sample_file_to_bucket, file_name=file2_name
+        )
 
         pattern = f"gs://{self.bucket}/*file-pattern.txt"
         self._cat_file_and_assert_success([pattern], [file_1_content, file_2_content])
@@ -94,9 +100,7 @@ class TestReadBucketFiles:
         _, file_content, bucket_file = self._create_bucket_file(sample_file_to_bucket)
 
         self._cat_file_and_assert_success(
-            [bucket_file],
-            [file_content, bucket_file],
-            display_url=True
+            [bucket_file], [file_content, bucket_file], display_url=True
         )
 
     def test_read_file_specific_byte_range(self, sample_file_to_bucket):
@@ -110,9 +114,7 @@ class TestReadBucketFiles:
 
         expected_content = self._get_expected_bytes_content(file_content, start, end)
         self._cat_file_and_assert_success(
-            [bucket_file],
-            expected_content,
-            range_value=f"{start}-{end}"
+            [bucket_file], expected_content, range_value=f"{start}-{end}"
         )
 
     def test_read_file_last_n_bytes(self, sample_file_to_bucket):
@@ -126,9 +128,7 @@ class TestReadBucketFiles:
         expected_content = self._get_expected_bytes_content(file_content, end=-n)
 
         self._cat_file_and_assert_success(
-            [bucket_file],
-            expected_content,
-            range_value=f"-{n}"
+            [bucket_file], expected_content, range_value=f"-{n}"
         )
 
     def test_read_nonexistent_file_returns_error(self):
@@ -141,7 +141,8 @@ class TestReadBucketFiles:
         )
         self.assert_helper.assert_error_response(
             response=response,
-            expected_message="ERROR: (gcloud.storage.cat) cat only works for valid cloud URLs")
+            expected_message="ERROR: (gcloud.storage.cat) cat only works for valid cloud URLs",
+        )
 
     def test_read_file_with_invalid_url_returns_error(self):
         """
@@ -153,4 +154,5 @@ class TestReadBucketFiles:
         )
         self.assert_helper.assert_error_response(
             response=response,
-            expected_message="ERROR: (gcloud.storage.cat) cat only works for valid cloud URLs")
+            expected_message="ERROR: (gcloud.storage.cat) cat only works for valid cloud URLs",
+        )

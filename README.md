@@ -135,6 +135,16 @@ Run tests with specific number of parallel workers:
 python -m pytest src/tests/ -n 4 -v
 ```
 
+### Generating HTML Test Reports
+
+Generate a detailed HTML report with test results:
+
+```bash
+python -m pytest src/tests/ -n auto -v --html=test_report.html
+```
+
+The HTML report will include test results, timing information, and failure details with nice formatting.
+
 ### Running Specific Tests
 
 Run a specific test file:

@@ -15,8 +15,14 @@ class TestDescribeBucketStorage:
 
     @pytest.fixture(autouse=True)
     def setup_test(
-            self, sample_project, sample_bucket, sample_file_to_bucket, service_account, gcp_client,
-            assert_helper):
+        self,
+        sample_project,
+        sample_bucket,
+        sample_file_to_bucket,
+        service_account,
+        gcp_client,
+        assert_helper,
+    ):
         self.client = gcp_client
         self.project = sample_project
         self.bucket = sample_bucket
@@ -77,9 +83,8 @@ class TestDescribeBucketStorage:
         Verifies that appropriate 404 error is returned with expected error message.
         """
         invalid_bucket_url = "gs://non-existing-bucket"
-        response = self.client.describe_bucket(
-            bucket_url=invalid_bucket_url
-        )
+        response = self.client.describe_bucket(bucket_url=invalid_bucket_url)
         self.assert_helper.assert_error_response(
             response=response,
-            expected_message=f"ERROR: (gcloud.storage.buckets.describe) {invalid_bucket_url} not found: 404.")
+            expected_message=f"ERROR: (gcloud.storage.buckets.describe) {invalid_bucket_url} not found: 404.",
+        )

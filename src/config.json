@@ -1,6 +1,6 @@
 {
-  "user_with_billing_setup": "p.supranovich@gmail.com",
-  "default_project": "test-gcp-id-1755265919",
-  "default_bucket": "sample-bucket-id",
+  "user_with_billing_setup": "your-email@gmail.com",
+  "default_project": "your-gcp-project-id",
+  "default_bucket": "your-test-bucket-name",
   "region": "EUROPE-WEST1"
 }

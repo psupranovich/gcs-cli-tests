@@ -40,33 +40,32 @@ class SignedUrlPage:
     def assert_file_access_granted(self) -> None:
         """Assert that file access is granted by checking for success messages."""
         expect(
-            self.hey_there_message,
-            "Expected 'Hey there!' message not found"
+            self.hey_there_message, "Expected 'Hey there!' message not found"
         ).to_be_visible()
         expect(
             self.file_access_message,
-            "Expected 'You have access to the file!' message not found"
+            "Expected 'You have access to the file!' message not found",
         ).to_be_visible()
 
     def assert_token_expired(self) -> None:
         """Assert that the token has expired."""
         expect(
             self.expired_token_message,
-            "ExpiredToken message not found - file was not expired"
+            "ExpiredToken message not found - file was not expired",
         ).to_be_visible()
 
     def assert_bucket_access(self, bucket_name: str) -> None:
         """Assert that bucket access is visible."""
         expect(
             self.bucket_name_locator(bucket_name),
-            f"Bucket name '{bucket_name}' not visible - no access for bucket"
+            f"Bucket name '{bucket_name}' not visible - no access for bucket",
         ).to_be_visible()
 
     def assert_file_visible_in_bucket(self, filename: str) -> None:
         """Assert that a specific file is visible in the bucket listing."""
         expect(
             self.filename_locator(filename),
-            f"File '{filename}' not visible in bucket listing"
+            f"File '{filename}' not visible in bucket listing",
         ).to_be_visible()
 
     def assert_bucket_and_file_access(self, bucket_name: str, filename: str) -> None:
