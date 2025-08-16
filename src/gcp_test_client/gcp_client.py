@@ -79,8 +79,45 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-    def delete_object(self, bucket: str, object_path: str, *, project: Optional[str] = None) -> GCPCommandResponse:
-        object_uri = f"gs://{bucket}/{object_path}"
+    def delete_object(self, 
+                     bucket: str, 
+                     object_path: str = None, 
+                     *, 
+                     project: Optional[str] = None,
+                     additional_headers: Optional[dict] = None,
+                     all_versions: bool = False,
+                     continue_on_error: bool = False,
+                     exclude_managed_folders: bool = False,
+                     recursive: bool = False,
+                     if_generation_match: Optional[str] = None,
+                     if_metageneration_match: Optional[str] = None,
+                     pattern: Optional[str] = None) -> GCPCommandResponse:
+        """
+        Delete objects using gcloud storage rm command with various options.
+        
+        Args:
+            bucket: Bucket name
+            object_path: Object path (optional if using pattern or deleting entire bucket)
+            project: Project ID (optional)
+            pattern: Pattern to match objects (e.g., '*.txt', '**' for all objects)
+            additional_headers: Additional headers for the request
+            all_versions: Delete all versions of objects
+            continue_on_error: Continue on errors
+            exclude_managed_folders: Exclude managed folders
+            recursive: Recursively delete (for bucket deletion)
+            if_generation_match: Generation match condition
+            if_metageneration_match: Metageneration match condition
+        """
+        if pattern:
+            # Use pattern for deletion (e.g., *.txt, **)
+            object_uri = f"gs://{bucket}/{pattern}"
+        elif object_path:
+            # Delete specific object
+            object_uri = f"gs://{bucket}/{object_path}"
+        else:
+            # Delete entire bucket (requires recursive=True)
+            object_uri = f"gs://{bucket}"
+            
         cmd = [
             "gcloud",
             "storage",
@@ -88,8 +125,32 @@ class GcpStorage:
             object_uri,
             "--quiet",
         ]
+        
         if project:
             cmd += ["--project", project]
+
+        if additional_headers:
+            for header, value in additional_headers.items():
+                cmd += ["--additional-headers", f"{header}={value}"]
+
+        if all_versions:
+            cmd.append("--all-versions")
+
+        if continue_on_error:
+            cmd.append("--continue-on-error")
+
+        if exclude_managed_folders:
+            cmd.append("--exclude-managed-folders")
+
+        if recursive:
+            cmd.append("--recursive")
+
+        if if_generation_match:
+            cmd += ["--if-generation-match", if_generation_match]
+
+        if if_metageneration_match:
+            cmd += ["--if-metageneration-match", if_metageneration_match]
+
         response = run_subprocess(cmd)
         return response
 
@@ -157,7 +218,7 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-    def add_policy_binding(self, project_id) -> (GCPCommandResponse, str):
+    def add_policy_binding(self, project_id) -> tuple[GCPCommandResponse, str]:
         sa = f"url-signer@{project_id}.iam.gserviceaccount.com"
         user = "p.supranovich@gmail.com"  # add take from config user email address
         cmd = [
@@ -244,3 +305,41 @@ class GcpStorage:
 
         response = run_subprocess(cmd)
         return response
+
+    def create_folder(self, bucket: str, folder_path: str, recursive: bool = False) -> GCPCommandResponse:
+        folder_uri = f"gs://{bucket}/{folder_path}"
+        cmd = [
+            "gcloud",
+            "storage",
+            "folders",
+            "create",
+            folder_uri,
+        ]
+        if recursive:
+            cmd.append("--recursive")
+        response = run_subprocess(cmd)
+        return response
+
+    def describe_bucket(self, bucket_url: str, additional_headers: Optional[dict] = None, raw: bool = False, format: Optional[str] = None) -> GCPCommandResponse:
+        cmd = [
+            "gcloud",
+            "storage",
+            "buckets",
+            "describe",
+            bucket_url
+        ]
+
+        if additional_headers:
+            for header, value in additional_headers.items():
+                cmd += ["--additional-headers", f"{header}={value}"]
+
+        if raw:
+            cmd.append("--raw")
+
+        if format:
+            cmd += ["--format", format]
+
+        response = run_subprocess(cmd)
+        return response
+
+

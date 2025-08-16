@@ -104,5 +104,5 @@ class TestCreateFolder:
         )
         assert_that(response.status_code).is_equal_to(1)
         assert_that(response.output).contains("ERROR: (gcloud.storage.cat) cat only works for valid cloud URLs")
-    
+
     
