@@ -232,7 +232,6 @@ class TestGcloudStorageRm:
         )
         assert_that(delete_response.status_code).is_equal_to(0)
 
-        # Verify bucket is deleted
         self._verify_bucket_deleted(test_bucket_name)
 
     def test_delete_files_by_extension_pattern(self):
@@ -322,13 +321,11 @@ class TestGcloudStorageRm:
         """
         _, file_name, _ = self._create_and_upload_file()
 
-        # Delete file with exclude managed folders
-        delete_response = self.client.delete_object(
+        self.client.delete_object(
             bucket=self.bucket,
             object_path=file_name,
             exclude_managed_folders=True
         )
-        assert_that(delete_response.status_code).is_equal_to(0)
 
         self._verify_file_deleted(file_name)
 

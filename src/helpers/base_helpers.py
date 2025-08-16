@@ -17,6 +17,4 @@ def run_subprocess(command: Union[List[str], str]) -> GCPCommandResponse:
         output=(res.stdout or "").strip(),
         error=(res.stderr or "").strip()
     )
-    print(response)
-
     return response

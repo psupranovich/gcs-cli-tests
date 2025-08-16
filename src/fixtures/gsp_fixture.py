@@ -7,7 +7,7 @@ from src.helpers.config_helper import get_config_value
 from src.helpers.data_helper import extract_ids, extract_bucket_ids, create_sample_text_file, delete_temp_files
 
 
-# --- Pytest hooks
+# Pytest hooks
 def sign_up_preconditions(gcp_client, sample_bucket, sample_project, service_account):
     """Preconditions"""
     sa = service_account
@@ -21,10 +21,11 @@ def sign_up_preconditions(gcp_client, sample_bucket, sample_project, service_acc
 
 
 def _is_controller(config):
-    return not hasattr(config, "workerinput")  # controller has no workerinput
+    return not hasattr(config, "workerinput")
 
 
 def pytest_configure(config):
+    """Preconditions hook"""
     if _is_controller(config):
         gcp_client = GcpStorage()
         sample_bucket = get_config_value("default_bucket")
@@ -49,19 +50,15 @@ def cleanup_txt_files_in_sample_bucket(gcp_client, sample_bucket):
 
 
 def pytest_unconfigure(config):
+    """Teardown hook"""
     if _is_controller(config):
         gcp_client = GcpStorage()
         sample_project = get_config_value("default_project")
-        print("CLEANUP BUCKET")
         cleanup_buckets_after_test(gcp_client, sample_project)
-        print("CLEANUP FILES")
         cleanup_txt_files_in_sample_bucket(gcp_client, sample_project)
 
 
-@pytest.fixture
-def assert_helper() -> AssertHelper:
-    return AssertHelper()
-
+# Pytest scope session fixtures
 
 @pytest.fixture(scope="session")
 def sample_project(gcp_client):
@@ -108,3 +105,8 @@ def sample_file_to_bucket(gcp_client, sample_bucket):
 @pytest.fixture(scope="session")
 def service_account(sample_project):
     return f"url-signer@{sample_project}.iam.gserviceaccount.com"
+
+# Other fixtures
+@pytest.fixture
+def assert_helper() -> AssertHelper:
+    return AssertHelper()

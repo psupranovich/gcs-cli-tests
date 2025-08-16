@@ -44,12 +44,19 @@ gcloud version
 
 If `gcloud: command not found`, ensure it's in your PATH or follow the [official installation guide](https://cloud.google.com/sdk/docs/install).
 
-2.**Install dependencies:**
+2.**Create and activate a virtual environment:**
+   ```bash
+   python3 -m venv gcs-cli-env
+   source gcs-cli-env/bin/activate  
+   # On Windows: gcs-cli-env\Scripts\activate
+   ```
+
+3.**Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3.**Configure your GCP settings** in `src/config.json`:
+4.**Configure your GCP settings** in `src/config.json`:
    ```json
    {
      "user_with_billing_setup": "your-email@gmail.com",
@@ -59,14 +66,16 @@ If `gcloud: command not found`, ensure it's in your PATH or follow the [official
    }
    ```
 
-4.**Authenticate with GCP:**
+5.**Authenticate with GCP:**
    ```bash
    gcloud auth login your-email@gmail.com
    gcloud config set project your-gcp-project-id
    ```
 
-5.**Run tests:**
+6.**Run tests:**
    ```bash
+   # Make sure your virtual environment is activated first
+   source gcs-cli-env/bin/activate  # On Windows: gcs-cli-env\Scripts\activate
    python -m pytest src/tests/ -n auto -v
    ```
 ---
@@ -100,6 +109,11 @@ The `src/config.json` values explained:
 
 ---
 ## Running Tests
+
+**Note:** Make sure your virtual environment is activated before running tests:
+```bash
+source gcs-cli-env/bin/activate  # On Windows: gcs-cli-env\Scripts\activate
+```
 
 ### Basic Test Execution
 
@@ -140,7 +154,8 @@ Run a specific test function:
 ```bash
 python -m pytest src/tests/test_sign_url.py::test_specific_function -v
 ```
-
+---
+![img.png](img.png)
 ---
 
 ## What happens during tests
@@ -149,11 +164,3 @@ python -m pytest src/tests/test_sign_url.py::test_specific_function -v
 - **Cleanup**: All temporary resources are automatically cleaned up after tests complete
 - **Your data**: Tests only use the bucket specified in your config.json and don't affect other GCS resources
 
-## Advanced Configuration (Optional)
-
-You can override config.json settings with environment variables:
-- `GCP_PROJECT`: Override default project
-- `GCS_LOCATION`: Override storage location (default: `us-central1`)
-- `GCS_STORAGE_CLASS`: Override storage class (default: `STANDARD`)
-- `GCS_BUCKET`: Use specific bucket (otherwise creates temporary)
-- `GCS_OBJECT`: Use specific object for sign-url tests 
