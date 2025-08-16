@@ -15,12 +15,12 @@ class TestDescribeBucketStorage:
 
     @pytest.fixture(autouse=True)
     def setup_test(
-            self, sample_project, sample_bucket, sample_file_to_bucket, sign_up_preconditions, gcp_client,
+            self, sample_project, sample_bucket, sample_file_to_bucket, service_account, gcp_client,
             assert_helper):
         self.client = gcp_client
         self.project = sample_project
         self.bucket = sample_bucket
-        self.sa = sign_up_preconditions
+        self.sa = service_account
         self.assert_helper: AssertHelper = assert_helper
 
     @property

@@ -212,8 +212,7 @@ class GcpStorage:
         return response
 
     @staticmethod
-    def add_policy_binding(project_id) -> tuple[GCPCommandResponse, str]:
-        sa = f"url-signer@{project_id}.iam.gserviceaccount.com"
+    def add_policy_binding(project_id, sa) -> tuple[GCPCommandResponse, str]:
         user = get_config_value("user_with_billing_setup")
         cmd = [
             "gcloud",
@@ -229,7 +228,7 @@ class GcpStorage:
             project_id,
         ]
         response = run_subprocess(cmd)
-        return response, sa
+        return response
 
     @staticmethod
     def allow_bucket_access(service_account, bucket, project_id):

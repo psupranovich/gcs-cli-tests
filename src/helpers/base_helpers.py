@@ -12,11 +12,11 @@ def run_subprocess(command: Union[List[str], str]) -> GCPCommandResponse:
         text=True,
 
     )
-    print(res)
     response = GCPCommandResponse(
         status_code=res.returncode,
         output=(res.stdout or "").strip(),
         error=(res.stderr or "").strip()
     )
+    print(response)
 
     return response
