@@ -2,36 +2,59 @@ import time
 
 import pytest
 from assertpy import assert_that
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page
 
+from src.helpers.assert_helper import AssertHelper
 from src.helpers.data_helper import extract_url
+from src.helpers.signed_url_page import SignedUrlPage
 
 
-class TestSighUrlCommand:
+class TestSignUrlCommand:
+    """
+    Test cases for 'gcloud storage sign-url' command.
+    Tests signed URL generation functionality with various parameters,
+    time-based access control, and error scenarios.
+    """
+
     @pytest.fixture(autouse=True)
-    def setup_test(self, sample_project, sample_bucket, sample_file_to_bucket, sign_up_preconditions, gcp_client, page):
+    def setup_test(self, sample_project, sample_bucket, sample_file_to_bucket, sign_up_preconditions, gcp_client, page,
+                   assert_helper):
         self.client = gcp_client
         self.project = sample_project
         self.bucket = sample_bucket
         self.bucket_file_path = sample_file_to_bucket()
         self.sa = sign_up_preconditions
         self.page: Page = page
+        self.signed_url_page = SignedUrlPage(page)
+        self.assert_helper: AssertHelper = assert_helper
 
-    def test_generate_sign_url(self):
+    @staticmethod
+    def _assert_sign_up_url(response):
+        assert_that(response.status_code).is_equal_to(0)
+        assert_that(response.output).contains("signed_url")
+        url = extract_url(response.output)
+        return url
+
+    def test_generate_signed_url_for_file_access(self):
+        """
+        Test generation of signed URL for file access.
+        Verifies that signed URL is generated and provides valid file access.
+        """
         response = self.client.sign_url(
             bucket_file_path=self.bucket_file_path,
             project=self.project,
             service_account=self.sa,
         )
-        assert_that(response.status_code).is_equal_to(0)
-        assert_that(response.output).contains("signed_url")
-        url = extract_url(response.output)
+        url = self._assert_sign_up_url(response=response)
         assert_that(url).is_not_empty()
-        self.page.goto(url=url)
-        expect(self.page.get_by_text("Hey there!"), "No access to file ").to_be_visible()
-        expect(self.page.get_by_text("You have access to the file!"), "No access to file ").to_be_visible()
+        self.signed_url_page.navigate_to_signed_url(url)
+        self.signed_url_page.assert_file_access_granted()
 
-    def test_access_limited_by_time(self):
+    def test_signed_url_expires_after_duration(self):
+        """
+        Test time-limited access with signed URL expiration.
+        Verifies that signed URL becomes invalid after specified duration.
+        """
         expected_duration = 5
 
         response = self.client.sign_url(
@@ -40,28 +63,51 @@ class TestSighUrlCommand:
             service_account=self.sa,
             duration=expected_duration
         )
-        assert_that(response.status_code).is_equal_to(0)
-        assert_that(response.output).contains("signed_url")
-        url = extract_url(response.output)
+        url = self._assert_sign_up_url(response=response)
+
         assert_that(url).is_not_empty()
         time.sleep(expected_duration)
 
-        self.page.goto(url=url)
-        expect(self.page.locator(selector="div span", has_text="ExpiredToken").first,
-               "File was not expired").to_be_visible()
+        self.signed_url_page.navigate_to_signed_url(url)
+        self.signed_url_page.assert_token_expired()
 
-    def test_account_must_be_specified_for_sign_up(self):
+    def test_generate_signed_url_for_bucket_access(self):
+        """
+        Test generation of signed URL for bucket-level access.
+        Verifies that signed URL provides access to bucket and its contents.
+        """
+        response = self.client.sign_url(
+            bucket_file_path=f"gs://{self.bucket}",
+            project=self.project,
+            service_account=self.sa,
+        )
+        url = self._assert_sign_up_url(response=response)
+
+        assert_that(url).is_not_empty()
+        self.signed_url_page.navigate_to_signed_url(url)
+        filename = self.bucket_file_path.split("/")[-1]
+        self.signed_url_page.assert_bucket_and_file_access(self.bucket, filename)
+
+    def test_invalid_service_account_returns_error(self):
+        """
+        Test signed URL generation with invalid service account.
+        Verifies that appropriate error is returned for malformed account ID.
+        """
         random_name = "random-sa"
         response = self.client.sign_url(
-            bucket_file_path="randomPath/",
+            bucket_file_path=self.bucket_file_path,
             project=self.project,
             service_account=random_name,
         )
-        assert_that(response.status_code).is_equal_to(1)
-        assert_that(response.output).contains(
-            f"ERROR: (gcloud.storage.sign-url) INVALID_ARGUMENT: Invalid form of account ID {random_name}. Should be [Gaia ID |Email |Unique ID |] of the account")
+        self.assert_helper.assert_error_response(
+            response=response,
+            expected_message=f"ERROR: (gcloud.storage.sign-url) INVALID_ARGUMENT: Invalid form of account ID {random_name}. Should be [Gaia ID |Email |Unique ID |] of the account")
 
-    def test_bucket_file_must_be_specified_for_sign_up(self):
+    def test_invalid_file_path_returns_error(self):
+        """
+        Test signed URL generation with invalid file path.
+        Verifies that appropriate error is returned for malformed file path.
+        """
         random_path = "random-path/file.txt"
 
         response = self.client.sign_url(
@@ -69,22 +115,6 @@ class TestSighUrlCommand:
             project=self.project,
             service_account=self.sa,
         )
-        assert_that(response.status_code).is_equal_to(1)
-        assert_that(response.output).contains(
-            "ERROR: gcloud crashed (AttributeError): 'FileUrl' object has no attribute 'is_provider")
-
-    def test_user_ahs_access_to_bucket(self):
-        response = self.client.sign_url(
-            bucket_file_path=f"gs://{self.bucket}",
-            project=self.project,
-            service_account=self.sa,
-        )
-        assert_that(response.status_code).is_equal_to(0)
-        assert_that(response.output).contains("signed_url")
-        url = extract_url(response.output)
-        assert_that(url).is_not_empty()
-        self.page.goto(url=url)
-        expect(self.page.locator(selector="div span", has_text=self.bucket).first,
-               "No access for bucket").to_be_visible()
-        expect(self.page.locator(selector="div span", has_text=self.bucket_file_path.split("/")[-1]).first,
-               "No access for bucket").to_be_visible()
+        self.assert_helper.assert_error_response(
+            response=response,
+            expected_message="ERROR: gcloud crashed (AttributeError): 'FileUrl' object has no attribute 'is_provider")

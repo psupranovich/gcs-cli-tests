@@ -1,6 +1,8 @@
 import pytest
 from assertpy import assert_that
 
+from src.helpers.assert_helper import AssertHelper
+from src.helpers.config_helper import get_config_value
 from src.helpers.data_helper import extract_ids, extract_bucket_ids, create_sample_text_file, delete_temp_files
 
 
@@ -18,23 +20,20 @@ def cleanup_buckets_after_test(gcp_client, sample_project):
 @pytest.fixture(scope="session")
 def sample_project(gcp_client):
     """Fixture to ensure a sample project exists and return its ID."""
-    project_id = "test-gcp-id-1755265919"
+    project_id = get_config_value("default_project", "test-gcp-id-1755265919")
 
-    # List existing projects
     result = gcp_client.list_gcp_projects()
     project_ids = extract_ids(result.output)
 
-    # Check if the project already exists
     if project_id in project_ids:
         return project_id
-    # Create the project if it does not exist
     gcp_client.create_gcp_project(project_id=project_id, name=project_id)
     return project_id
 
 
 @pytest.fixture(scope="session")
 def sample_bucket(gcp_client, sample_project):
-    bucket_id = "sample-bucket-id"
+    bucket_id = get_config_value("default_bucket", "sample-bucket-id")
     result = gcp_client.list_buckets(project=sample_project)
     bucket_ids = extract_bucket_ids(output_data=result.output)
     if bucket_id in bucket_ids:
@@ -70,28 +69,18 @@ def sign_up_preconditions(gcp_client, sample_bucket, sample_project, sample_file
     response = gcp_client.allow_bucket_access(
         service_account=sa, bucket=sample_bucket, project_id=sample_project)
     assert_that(response.status_code).is_equal_to(0)
-    # response = gcp_client.allow_file_access(bucket=sample_bucket, project_id=sample_project)
-    # assert_that(response.status_code).is_equal_to(0)
     return sa
-
-
-import re
 
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_txt_files_in_sample_bucket(gcp_client, sample_bucket):
     """Cleanup .txt files in the sample bucket and .txt files in the fixtures folder at the end of the session."""
-    import os
-    import glob
-
     yield
 
-    # Cleanup .txt files in the sample bucket
-    result = gcp_client.list_files_in_bucket(bucket=sample_bucket)
-    for uri in result.output.strip().splitlines():
-        object_name = uri.replace(f"gs://{sample_bucket}/", "", 1)
-        if object_name.endswith(".txt"):
-            gcp_client.delete_object(bucket=sample_bucket, object_path=object_name)
-
-    # Cleanup .txt files in the fixtures folder
+    gcp_client.delete_object(bucket=sample_bucket, pattern="*.txt")
     delete_temp_files()
+
+
+@pytest.fixture
+def assert_helper() -> AssertHelper:
+    return AssertHelper()

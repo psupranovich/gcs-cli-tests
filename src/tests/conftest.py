@@ -20,7 +20,7 @@ def pw():
 @pytest.fixture(scope="session")
 def browser(pw: Playwright):
     browser = pw.chromium.launch(
-        headless=False,
+        headless=True,
         args=["--disable-web-security"],
     )
     yield browser
