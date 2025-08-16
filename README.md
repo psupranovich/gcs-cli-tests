@@ -1,6 +1,7 @@
 # gcs-cli-tests
 
-A comprehensive pytest suite for testing Google Cloud Storage (GCS) functionality using the `gcloud storage` CLI tool.
+A pytest suite for testing specific Google Cloud Storage (GCS) commands
+([gcloud storage reference](https://cloud.google.com/sdk/gcloud/reference/storage)).
 
 ## What this project tests
 
