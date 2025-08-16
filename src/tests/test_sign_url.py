@@ -9,11 +9,11 @@ from src.helpers.data_helper import extract_url
 
 class TestSighUrlCommand:
     @pytest.fixture(autouse=True)
-    def setup_test(self, sample_project, sample_bucket, sample_file_to_bucket, sign_up_preconditions,gcp_client, page):
+    def setup_test(self, sample_project, sample_bucket, sample_file_to_bucket, sign_up_preconditions, gcp_client, page):
         self.client = gcp_client
         self.project = sample_project
         self.bucket = sample_bucket
-        self.bucket_file_path = sample_file_to_bucket
+        self.bucket_file_path = sample_file_to_bucket()
         self.sa = sign_up_preconditions
         self.page: Page = page
 
@@ -58,7 +58,8 @@ class TestSighUrlCommand:
             service_account=random_name,
         )
         assert_that(response.status_code).is_equal_to(1)
-        assert_that(response.output).contains(f"ERROR: (gcloud.storage.sign-url) INVALID_ARGUMENT: Invalid form of account ID {random_name}. Should be [Gaia ID |Email |Unique ID |] of the account")
+        assert_that(response.output).contains(
+            f"ERROR: (gcloud.storage.sign-url) INVALID_ARGUMENT: Invalid form of account ID {random_name}. Should be [Gaia ID |Email |Unique ID |] of the account")
 
     def test_bucket_file_must_be_specified_for_sign_up(self):
         random_path = "random-path/file.txt"

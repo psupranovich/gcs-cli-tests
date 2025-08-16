@@ -1,5 +1,6 @@
 import subprocess
 from typing import List, Union
+
 from src.helpers.data_helper import GCPCommandResponse
 
 
@@ -7,7 +8,7 @@ def run_subprocess(command: Union[List[str], str]) -> GCPCommandResponse:
     res = subprocess.run(
         args=command,
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT, 
+        stderr=subprocess.STDOUT,
         text=True,
 
     )

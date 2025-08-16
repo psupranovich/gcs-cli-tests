@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 from dataclasses import dataclass
@@ -44,12 +45,23 @@ def extract_bucket_ids(output_data) -> list:
     return bucket_ids
 
 
-def create_sample_text_file(file_name):
+def create_sample_text_file(file_name, file_content: str = None):
     test_file_path = os.path.join(os.path.dirname(__file__), file_name)
     with open(test_file_path, "w") as test_file:
-        test_file.write("Hey there!\n")
-        test_file.write("You have access to the file!")
+        if not file_content:
+            file_content = "Hey there!\nYou have access to the file!"
+        test_file.write(file_content)
     return test_file_path
+
+
+def delete_temp_files():
+    test_file_path = os.path.join(os.path.dirname(__file__))
+    txt_files = glob.glob(os.path.join(test_file_path, "*.txt"))
+    for txt_file in txt_files:
+        try:
+            os.remove(txt_file)
+        except Exception:
+            pass
 
 
 def extract_url(output_data):

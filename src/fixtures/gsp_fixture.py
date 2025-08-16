@@ -1,7 +1,7 @@
 import pytest
 from assertpy import assert_that
 
-from src.helpers.data_helper import extract_ids, extract_bucket_ids, create_sample_text_file
+from src.helpers.data_helper import extract_ids, extract_bucket_ids, create_sample_text_file, delete_temp_files
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -46,19 +46,22 @@ def sample_bucket(gcp_client, sample_project):
 
 @pytest.fixture(scope="session")
 def sample_file_to_bucket(gcp_client, sample_bucket):
-    result = gcp_client.check_file_in_bucket(bucket=sample_bucket, file_name="hello.txt")
-    if result.status_code != 0:
-        local_file_path = create_sample_text_file(file_name="hello.txt")
-        response = gcp_client.copy_file_to_bucket(
-            bucket=sample_bucket,
-            local_file_path=local_file_path,
-            file_name="hello.txt")
-        assert_that(response.status_code).is_equal_to(0)
-    return f"gs://{sample_bucket}/hello.txt"
+    def _upload_file(file_name="hello.txt", file_content=None):
+        result = gcp_client.check_file_in_bucket(bucket=sample_bucket, file_name=file_name)
+        if result.status_code != 0:
+            local_file_path = create_sample_text_file(file_name=file_name, file_content=file_content)
+            response = gcp_client.copy_file_to_bucket(
+                bucket=sample_bucket,
+                local_file_path=local_file_path,
+                file_name=file_name)
+            assert_that(response.status_code).is_equal_to(0)
+        return f"gs://{sample_bucket}/{file_name}"
+
+    return _upload_file
 
 
 @pytest.fixture(scope="session")
-def sign_up_preconditions(gcp_client, sample_bucket, sample_project,sample_file_to_bucket):
+def sign_up_preconditions(gcp_client, sample_bucket, sample_project, sample_file_to_bucket):
     """Preconditions"""
     response = gcp_client.enable_credentials(project=sample_project)
     assert_that(response.status_code).is_equal_to(0)
@@ -67,16 +70,28 @@ def sign_up_preconditions(gcp_client, sample_bucket, sample_project,sample_file_
     response = gcp_client.allow_bucket_access(
         service_account=sa, bucket=sample_bucket, project_id=sample_project)
     assert_that(response.status_code).is_equal_to(0)
-    response = gcp_client.allow_file_access(bucket=sample_bucket, project_id=sample_project)
-    assert_that(response.status_code).is_equal_to(0)
+    # response = gcp_client.allow_file_access(bucket=sample_bucket, project_id=sample_project)
+    # assert_that(response.status_code).is_equal_to(0)
     return sa
 
 
-# TODO add fixture to delete files in bucket at the end
+import re
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_txt_files_in_sample_bucket(gcp_client, sample_bucket):
+    """Cleanup .txt files in the sample bucket and .txt files in the fixtures folder at the end of the session."""
+    import os
+    import glob
 
+    yield
 
+    # Cleanup .txt files in the sample bucket
+    result = gcp_client.list_files_in_bucket(bucket=sample_bucket)
+    for uri in result.output.strip().splitlines():
+        object_name = uri.replace(f"gs://{sample_bucket}/", "", 1)
+        if object_name.endswith(".txt"):
+            gcp_client.delete_object(bucket=sample_bucket, object_path=object_name)
 
-
-
+    # Cleanup .txt files in the fixtures folder
+    delete_temp_files()

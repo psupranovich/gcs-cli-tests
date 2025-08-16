@@ -25,11 +25,11 @@ class GcpStorage:
         return response
 
     def create_bucket(
-        self,
-        bucket: str,
-        project: str,
-        location: Optional[str] = None,
-        storage_class: Optional[str] = None,
+            self,
+            bucket: str,
+            project: str,
+            location: Optional[str] = None,
+            storage_class: Optional[str] = None,
     ) -> GCPCommandResponse:
         bucket_uri = f"gs://{bucket}"
         cmd = [
@@ -93,7 +93,6 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-
     def list_gcp_projects(self, limit: Optional[int] = 20) -> GCPCommandResponse:
         cmd = ["gcloud", "projects", "list", "--sort-by=projectId"]
         if limit is not None:
@@ -101,9 +100,8 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-
-    def sign_url(self,  bucket_file_path: str, project: str, service_account: str,  duration: int = 3600,
-                 region: str = None)-> GCPCommandResponse:
+    def sign_url(self, bucket_file_path: str, project: str, service_account: str, duration: int = 3600,
+                 region: str = None) -> GCPCommandResponse:
         if region is None:
             region = "EUROPE-WEST1"
 
@@ -148,20 +146,20 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
-    def enable_credentials(self,project: str) ->GCPCommandResponse:
+    def enable_credentials(self, project: str) -> GCPCommandResponse:
         cmd = [
             "gcloud",
             "services",
-            "enable",  "iamcredentials.googleapis.com",
+            "enable", "iamcredentials.googleapis.com",
             "--project",
             project,
         ]
         response = run_subprocess(cmd)
         return response
 
-    def add_policy_binding(self, project_id)  -> (GCPCommandResponse, str):
+    def add_policy_binding(self, project_id) -> (GCPCommandResponse, str):
         sa = f"url-signer@{project_id}.iam.gserviceaccount.com"
-        user = "" # add take from config user email address
+        user = "p.supranovich@gmail.com"  # add take from config user email address
         cmd = [
             "gcloud",
             "iam",
@@ -178,7 +176,7 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response, sa
 
-    def allow_bucket_access(self, service_account,bucket, project_id):
+    def allow_bucket_access(self, service_account, bucket, project_id):
         cmd = [
             "gcloud",
             "storage",
@@ -209,4 +207,40 @@ class GcpStorage:
         response = run_subprocess(cmd)
         return response
 
+    def list_files_in_bucket(self, bucket: str) -> GCPCommandResponse:
+        cmd = [
+            "gcloud",
+            "storage",
+            "ls",
+            f"gs://{bucket}/"
+        ]
+        response = run_subprocess(cmd)
+        return response
 
+    def cat_file_from_url(self,
+                          urls,
+                          additional_headers: Optional[dict] = None,
+                          display_url: bool = False,
+                          range_value: Optional[str] = None,
+                          decryption_keys: Optional[list] = None,
+                          ) -> GCPCommandResponse:
+        if isinstance(urls, str):
+            urls = [urls]
+        cmd = ["gcloud", "storage", "cat"] + urls
+
+        if additional_headers:
+            for header, value in additional_headers.items():
+                cmd += ["--additional-headers", f"{header}={value}"]
+
+        if display_url:
+            cmd.append("--display-url")
+
+        if range_value:
+            cmd += ["--range", range_value]
+
+        if decryption_keys:
+            keys_str = ",".join(decryption_keys)
+            cmd += [f"--decryption-keys={keys_str}"]
+
+        response = run_subprocess(cmd)
+        return response
